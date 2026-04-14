@@ -1,0 +1,260 @@
+{
+  "status": "ok",
+  "response": {
+    "zone": {
+      "name": "unit.tests",
+      "type": "Primary"
+    },
+    "records": [
+      {
+        "name": "unit.tests",
+        "type": "SOA",
+        "ttl": 900,
+        "rData": {
+          "primaryNameServer": "ns1.unit.tests.",
+          "responsiblePerson": "hostmaster.unit.tests.",
+          "serial": 1,
+          "refresh": 3600,
+          "retry": 900,
+          "expire": 604800,
+          "minimum": 300
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "A",
+        "ttl": 300,
+        "rData": {
+          "ipAddress": "1.2.3.4"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "A",
+        "ttl": 300,
+        "rData": {
+          "ipAddress": "1.2.3.5"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "aaaa.unit.tests",
+        "type": "AAAA",
+        "ttl": 300,
+        "rData": {
+          "ipAddress": "2601:644:500:e210:62f8:1dff:feb8:947a"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "cname.unit.tests",
+        "type": "CNAME",
+        "ttl": 300,
+        "rData": {
+          "cname": "unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "ANAME",
+        "ttl": 300,
+        "rData": {
+          "aname": "aname-target.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "dname.unit.tests",
+        "type": "DNAME",
+        "ttl": 300,
+        "rData": {
+          "dname": "unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "MX",
+        "ttl": 300,
+        "rData": {
+          "preference": 10,
+          "exchange": "smtp.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "MX",
+        "ttl": 300,
+        "rData": {
+          "preference": 20,
+          "exchange": "smtp2.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "txt.unit.tests",
+        "type": "TXT",
+        "ttl": 300,
+        "rData": {
+          "text": "v=spf1 include:unit.tests ~all"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "txt.unit.tests",
+        "type": "TXT",
+        "ttl": 300,
+        "rData": {
+          "text": "txt-value-2"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "NS",
+        "ttl": 3600,
+        "rData": {
+          "nameServer": "ns1.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "unit.tests",
+        "type": "NS",
+        "ttl": 3600,
+        "rData": {
+          "nameServer": "ns2.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "sub.unit.tests",
+        "type": "NS",
+        "ttl": 3600,
+        "rData": {
+          "nameServer": "ns1.sub.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "ptr.unit.tests",
+        "type": "PTR",
+        "ttl": 300,
+        "rData": {
+          "ptrName": "a.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "_srv._tcp.unit.tests",
+        "type": "SRV",
+        "ttl": 300,
+        "rData": {
+          "priority": 10,
+          "weight": 20,
+          "port": 30,
+          "target": "foo-1.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "_srv._tcp.unit.tests",
+        "type": "SRV",
+        "ttl": 300,
+        "rData": {
+          "priority": 12,
+          "weight": 20,
+          "port": 30,
+          "target": "foo-2.unit.tests."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "caa.unit.tests",
+        "type": "CAA",
+        "ttl": 300,
+        "rData": {
+          "flags": 0,
+          "tag": "issue",
+          "value": "ca.unit.tests"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "naptr.unit.tests",
+        "type": "NAPTR",
+        "ttl": 300,
+        "rData": {
+          "order": 10,
+          "preference": 20,
+          "flags": "U",
+          "services": "E2U+sip",
+          "regexp": "!^.*$!sip:info@unit.tests!",
+          "replacement": "."
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "ds.unit.tests",
+        "type": "DS",
+        "ttl": 300,
+        "rData": {
+          "keyTag": 12345,
+          "algorithm": 8,
+          "digestType": 2,
+          "digest": "49FD46E6C4B45C55D4AC69CBD3CD34AC1AFE51DE"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "sshfp.unit.tests",
+        "type": "SSHFP",
+        "ttl": 300,
+        "rData": {
+          "algorithm": 1,
+          "fingerprintType": 1,
+          "fingerprint": "bf6b6825d2977c511a475bbefb88aad54a92ac73"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      },
+      {
+        "name": "tlsa.unit.tests",
+        "type": "TLSA",
+        "ttl": 300,
+        "rData": {
+          "certificateUsage": 3,
+          "selector": 1,
+          "matchingType": 1,
+          "certificateAssociationData": "abcdef0123456789"
+        },
+        "dnssecStatus": "Unknown",
+        "disabled": false
+      }
+    ]
+  }
+}

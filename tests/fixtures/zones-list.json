@@ -1,0 +1,30 @@
+{
+  "status": "ok",
+  "response": {
+    "pageNumber": 1,
+    "totalPages": 1,
+    "totalZones": 2,
+    "zones": [
+      {
+        "name": "unit.tests",
+        "type": "Primary",
+        "internal": false,
+        "dnssecStatus": "Unsigned",
+        "soaSerial": 1,
+        "notifyFailed": false,
+        "notifyFailedFor": [],
+        "disabled": false
+      },
+      {
+        "name": "other.tests",
+        "type": "Primary",
+        "internal": false,
+        "dnssecStatus": "Unsigned",
+        "soaSerial": 1,
+        "notifyFailed": false,
+        "notifyFailedFor": [],
+        "disabled": false
+      }
+    ]
+  }
+}

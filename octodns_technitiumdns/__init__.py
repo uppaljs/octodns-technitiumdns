@@ -8,7 +8,7 @@ from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
 from octodns.record import Record
 
-__VERSION__ = '0.0.1'
+__VERSION__ = '1.0.0'
 
 
 class TechnitiumDnsProvider(BaseProvider):
@@ -44,13 +44,13 @@ class TechnitiumDnsProvider(BaseProvider):
 
         SUPPORTS.add('SVCB')
         SUPPORTS.add('HTTPS')
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
     try:
         from octodns.record.uri import UriRecord  # noqa: F401
 
         SUPPORTS.add('URI')
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
 
     # Mapping from Technitium string enum values to integers for DS

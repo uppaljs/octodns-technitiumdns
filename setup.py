@@ -52,6 +52,6 @@ setup(
     packages=find_packages(),
     python_requires='>=3.9',
     tests_require=tests_require,
-    url='https://github.com/uppal/octodns-technitiumdns',
+    url='https://github.com/uppaljs/octodns-technitiumdns',
     version=version(),
 )

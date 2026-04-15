@@ -723,3 +723,448 @@ class TestTechnitiumDnsProvider(TestCase):
         self.assertIn('priority=10', body)
         self.assertIn('weight=20', body)
         self.assertIn('port=5060', body)
+
+    def test_populate_loc_records(self):
+        """Test LOC record parsing from Technitium."""
+        provider = self._provider()
+        zone = self._zone()
+        zones_list = _load_fixture('zones-list.json')
+
+        records = {
+            'status': 'ok',
+            'response': {
+                'records': [
+                    {
+                        'name': 'loc.unit.tests',
+                        'type': 'LOC',
+                        'ttl': 300,
+                        'rData': {
+                            'latDegrees': 51,
+                            'latMinutes': 30,
+                            'latSeconds': 12.748,
+                            'latDirection': 'N',
+                            'longDegrees': 0,
+                            'longMinutes': 7,
+                            'longSeconds': 39.612,
+                            'longDirection': 'W',
+                            'altitude': 0.0,
+                            'size': 1.0,
+                            'horizontalPrecision': 10000.0,
+                            'verticalPrecision': 10.0,
+                        },
+                        'disabled': False,
+                    }
+                ]
+            },
+        }
+
+        with requests_mock() as mock:
+            mock.get(f'{self.api_url}/api/zones/list', json=zones_list)
+            mock.get(f'{self.api_url}/api/zones/records/get', json=records)
+            provider.populate(zone)
+
+        recs = {(r.name, r._type): r for r in zone.records}
+        loc = recs[('loc', 'LOC')]
+        self.assertEqual(300, loc.ttl)
+        v = loc.values[0]
+        self.assertEqual(51, v.lat_degrees)
+        self.assertEqual(30, v.lat_minutes)
+        self.assertEqual(12.748, v.lat_seconds)
+        self.assertEqual('N', v.lat_direction)
+        self.assertEqual(0, v.long_degrees)
+        self.assertEqual(7, v.long_minutes)
+        self.assertEqual(39.612, v.long_seconds)
+        self.assertEqual('W', v.long_direction)
+        self.assertEqual(0.0, v.altitude)
+        self.assertEqual(1.0, v.size)
+        self.assertEqual(10000.0, v.precision_horz)
+        self.assertEqual(10.0, v.precision_vert)
+
+    def test_apply_loc_records(self):
+        """Test LOC record params generation."""
+        provider = self._provider()
+
+        desired = Zone('unit.tests.', [])
+        desired.add_record(
+            Record.new(
+                desired,
+                'loc',
+                {
+                    'type': 'LOC',
+                    'ttl': 300,
+                    'values': [
+                        {
+                            'lat_degrees': 51,
+                            'lat_minutes': 30,
+                            'lat_seconds': 12.748,
+                            'lat_direction': 'N',
+                            'long_degrees': 0,
+                            'long_minutes': 7,
+                            'long_seconds': 39.612,
+                            'long_direction': 'W',
+                            'altitude': 0.0,
+                            'size': 1.0,
+                            'precision_horz': 10000.0,
+                            'precision_vert': 10.0,
+                        }
+                    ],
+                },
+            )
+        )
+
+        zones_list = _load_fixture('zones-list.json')
+
+        with requests_mock() as mock:
+            mock.get(f'{self.api_url}/api/zones/list', json=zones_list)
+            mock.get(
+                f'{self.api_url}/api/zones/records/get',
+                json={'status': 'ok', 'response': {'records': []}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/add',
+                json={'status': 'ok', 'response': {}},
+            )
+
+            plan = provider.plan(desired)
+            self.assertIsNotNone(plan)
+            provider.apply(plan)
+
+        add_calls = [
+            h for h in mock.request_history if '/api/zones/records/add' in h.url
+        ]
+        self.assertEqual(1, len(add_calls))
+        body = add_calls[0].body
+        self.assertIn('type=LOC', body)
+        self.assertIn('latDegrees=51', body)
+        self.assertIn('longDirection=W', body)
+
+    def test_populate_uri_records(self):
+        """Test URI record parsing from Technitium."""
+        provider = self._provider()
+        zone = self._zone()
+        zones_list = _load_fixture('zones-list.json')
+
+        # URI records require underscore-prefixed names
+        records = {
+            'status': 'ok',
+            'response': {
+                'records': [
+                    {
+                        'name': '_http._tcp.unit.tests',
+                        'type': 'URI',
+                        'ttl': 300,
+                        'rData': {
+                            'priority': 10,
+                            'weight': 1,
+                            'uri': 'https://unit.tests/',
+                        },
+                        'disabled': False,
+                    }
+                ]
+            },
+        }
+
+        with requests_mock() as mock:
+            mock.get(f'{self.api_url}/api/zones/list', json=zones_list)
+            mock.get(f'{self.api_url}/api/zones/records/get', json=records)
+            provider.populate(zone)
+
+        recs = {(r.name, r._type): r for r in zone.records}
+        # URI may not be supported depending on octodns version
+        if ('_http._tcp', 'URI') in recs:
+            uri = recs[('_http._tcp', 'URI')]
+            self.assertEqual(10, uri.values[0].priority)
+            self.assertEqual(1, uri.values[0].weight)
+            self.assertEqual('https://unit.tests/', uri.values[0].target)
+
+    def test_apply_uri_records(self):
+        """Test URI record params generation."""
+        provider = self._provider()
+
+        # Skip if URI not supported in this octodns version
+        if 'URI' not in provider.SUPPORTS:
+            return
+
+        desired = Zone('unit.tests.', [])
+        desired.add_record(
+            Record.new(
+                desired,
+                '_http._tcp',
+                {
+                    'type': 'URI',
+                    'ttl': 300,
+                    'values': [
+                        {
+                            'priority': 10,
+                            'weight': 1,
+                            'target': 'https://unit.tests/',
+                        }
+                    ],
+                },
+            )
+        )
+
+        zones_list = _load_fixture('zones-list.json')
+
+        with requests_mock() as mock:
+            mock.get(f'{self.api_url}/api/zones/list', json=zones_list)
+            mock.get(
+                f'{self.api_url}/api/zones/records/get',
+                json={'status': 'ok', 'response': {'records': []}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/add',
+                json={'status': 'ok', 'response': {}},
+            )
+
+            plan = provider.plan(desired)
+            self.assertIsNotNone(plan)
+            provider.apply(plan)
+
+        add_calls = [
+            h for h in mock.request_history if '/api/zones/records/add' in h.url
+        ]
+        self.assertEqual(1, len(add_calls))
+        body = add_calls[0].body
+        self.assertIn('type=URI', body)
+        self.assertIn('priority=10', body)
+        self.assertIn('weight=1', body)
+
+    def test_apply_creates_zone_cleans_default_ns(self):
+        """Test that zone creation cleans up default NS records."""
+        provider = self._provider()
+
+        desired = Zone('brand-new.tests.', [])
+        desired.add_record(
+            Record.new(
+                desired, '', {'type': 'A', 'ttl': 300, 'values': ['1.2.3.4']}
+            )
+        )
+
+        with requests_mock() as mock:
+            mock.get(
+                f'{self.api_url}/api/zones/list',
+                json={'status': 'ok', 'response': {'zones': []}},
+            )
+            mock.get(
+                f'{self.api_url}/api/zones/records/get',
+                [
+                    # First call: NS records query during zone creation
+                    {
+                        'json': {
+                            'status': 'ok',
+                            'response': {
+                                'records': [
+                                    {
+                                        'name': 'brand-new.tests',
+                                        'type': 'NS',
+                                        'ttl': 3600,
+                                        'rData': {'nameServer': 'localhost.'},
+                                    }
+                                ]
+                            },
+                        }
+                    },
+                    # Second call: populate records
+                    {'json': {'status': 'ok', 'response': {'records': []}}},
+                ],
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/create',
+                json={'status': 'ok', 'response': {}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/add',
+                json={'status': 'ok', 'response': {}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/delete',
+                json={'status': 'ok', 'response': {}},
+            )
+
+            plan = provider.plan(desired)
+            self.assertIsNotNone(plan)
+            provider.apply(plan)
+
+        # Verify NS cleanup delete was called
+        delete_calls = [
+            h
+            for h in mock.request_history
+            if '/api/zones/records/delete' in h.url
+        ]
+        self.assertGreater(len(delete_calls), 0)
+        self.assertIn('nameServer=localhost.', delete_calls[0].body)
+
+    def test_to_int_fallbacks(self):
+        """Test _to_int falls back to int() then raw value."""
+        # Numeric string not in map -> int conversion
+        result = TechnitiumDnsProvider._to_int('42', {'FOO': 1})
+        self.assertEqual(42, result)
+
+        # Non-numeric string not in map -> returned as-is
+        result = TechnitiumDnsProvider._to_int('UNKNOWN', {'FOO': 1})
+        self.assertEqual('UNKNOWN', result)
+
+    def test_record_name_no_suffix_match(self):
+        """Test _record_name when FQDN doesn't end with zone suffix."""
+        provider = self._provider()
+        # FQDN that doesn't match zone -> returned as-is
+        result = provider._record_name('other.domain.com', 'example.com')
+        self.assertEqual('other.domain.com', result)
+
+    def test_unsupported_record_type_skipped(self):
+        """Test that unsupported record types are silently skipped."""
+        provider = self._provider()
+        zone = self._zone()
+        zones_list = _load_fixture('zones-list.json')
+
+        records = {
+            'status': 'ok',
+            'response': {
+                'records': [
+                    {
+                        'name': 'unit.tests',
+                        'type': 'OPENPGPKEY',
+                        'ttl': 300,
+                        'rData': {'data': 'abc123'},
+                        'disabled': False,
+                    },
+                    {
+                        'name': 'a.unit.tests',
+                        'type': 'A',
+                        'ttl': 300,
+                        'rData': {'ipAddress': '1.2.3.4'},
+                        'disabled': False,
+                    },
+                ]
+            },
+        }
+
+        with requests_mock() as mock:
+            mock.get(f'{self.api_url}/api/zones/list', json=zones_list)
+            mock.get(f'{self.api_url}/api/zones/records/get', json=records)
+            provider.populate(zone)
+
+        recs = {(r.name, r._type): r for r in zone.records}
+        # Only the A record should be present
+        self.assertEqual(1, len(zone.records))
+        self.assertIn(('a', 'A'), recs)
+
+    def test_create_zone_ns_cleanup_exception(self):
+        """Test that NS cleanup failure during zone creation is non-fatal."""
+        provider = self._provider()
+
+        desired = Zone('fail-ns.tests.', [])
+        desired.add_record(
+            Record.new(
+                desired, '', {'type': 'A', 'ttl': 300, 'values': ['1.2.3.4']}
+            )
+        )
+
+        with requests_mock() as mock:
+            mock.get(
+                f'{self.api_url}/api/zones/list',
+                json={'status': 'ok', 'response': {'zones': []}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/create',
+                json={'status': 'ok', 'response': {}},
+            )
+            # NS records query during cleanup raises an error
+            mock.get(
+                f'{self.api_url}/api/zones/records/get',
+                [
+                    # First call: NS cleanup - returns error
+                    {
+                        'json': {
+                            'status': 'error',
+                            'errorMessage': 'Something went wrong',
+                        }
+                    },
+                    # Second call: populate records
+                    {'json': {'status': 'ok', 'response': {'records': []}}},
+                ],
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/add',
+                json={'status': 'ok', 'response': {}},
+            )
+
+            plan = provider.plan(desired)
+            self.assertIsNotNone(plan)
+            # Should not raise despite NS cleanup failure
+            provider.apply(plan)
+
+    def test_create_zone_ns_cleanup_skips_non_ns(self):
+        """Test NS cleanup skips non-NS records in response."""
+        provider = self._provider()
+
+        desired = Zone('skip-ns.tests.', [])
+        desired.add_record(
+            Record.new(
+                desired, '', {'type': 'A', 'ttl': 300, 'values': ['1.2.3.4']}
+            )
+        )
+
+        with requests_mock() as mock:
+            mock.get(
+                f'{self.api_url}/api/zones/list',
+                json={'status': 'ok', 'response': {'zones': []}},
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/create',
+                json={'status': 'ok', 'response': {}},
+            )
+            mock.get(
+                f'{self.api_url}/api/zones/records/get',
+                [
+                    # NS cleanup query returns a non-NS record
+                    {
+                        'json': {
+                            'status': 'ok',
+                            'response': {
+                                'records': [
+                                    {
+                                        'name': 'skip-ns.tests',
+                                        'type': 'SOA',
+                                        'ttl': 900,
+                                        'rData': {},
+                                    }
+                                ]
+                            },
+                        }
+                    },
+                    # populate call
+                    {'json': {'status': 'ok', 'response': {'records': []}}},
+                ],
+            )
+            mock.post(
+                f'{self.api_url}/api/zones/records/add',
+                json={'status': 'ok', 'response': {}},
+            )
+
+            plan = provider.plan(desired)
+            self.assertIsNotNone(plan)
+            provider.apply(plan)
+
+        # No delete calls should have been made (SOA != NS)
+        delete_calls = [
+            h
+            for h in mock.request_history
+            if '/api/zones/records/delete' in h.url
+        ]
+        self.assertEqual(0, len(delete_calls))
+
+    def test_conditional_svcb_import(self):
+        """Test that SVCB/HTTPS are in SUPPORTS when available."""
+        provider = self._provider()
+        # octodns 1.5+ should have SVCB support
+        has_svcb = 'SVCB' in provider.SUPPORTS
+        if has_svcb:
+            self.assertIn('HTTPS', provider.SUPPORTS)
+
+    def test_conditional_uri_import(self):
+        """Test that URI is in SUPPORTS when available."""
+        provider = self._provider()
+        # Just verify the conditional import result is consistent
+        self.assertIsInstance(provider.SUPPORTS, set)

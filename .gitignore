@@ -13,3 +13,4 @@ nosetests.xml
 octodns_technitiumdns*.egg-info/
 .pytest_cache/
 tmp-octodns/
+.claude/
